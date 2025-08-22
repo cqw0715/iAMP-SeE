@@ -24,4 +24,4 @@ Dataset 2 is sourced from the literature referenced below：
 | esm              | ≥0.5.0   |
 | imbalanced-learn | ≥0.9.0   |
 
-
+iAMP-SeEModel1.py is used for the binary classification task of AMPs, while iAMP-SeEModel2.py is utilized for the multi-class classification task of AMPs. The corresponding datasets are All32400.csv and All2_16200.csv, respectively.
