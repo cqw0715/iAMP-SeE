@@ -1,6 +1,6 @@
 # iAMP-SeE: A High-Accuracy Antimicrobial Peptide Recognition Model Based on ESM2 Feature Extraction and SeE Attention Mechanism
 
-## Dataset source
+## Dataset
 <img width="2000" height="1530" alt="Figure2" src="https://github.com/user-attachments/assets/96b3fda9-61fd-4d9e-a47b-11132eb3bacc" />
 In dataset 1, the positive samples were collected from five public antimicrobial peptide databases: RAMP, dbAMP, CAMPr-4, AMPfun, and ADAPBLE. The negative samples were sourced from the UniProt database.
 Dataset 2 is sourced from the literature referenced below：
