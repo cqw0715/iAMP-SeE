@@ -10,21 +10,18 @@ Dataset 2 is sourced from the literature referenced below：
 ## Requirements
 
 ### Core Dependencies
-| Library | Version | Purpose |
-|---------|---------|---------|
-| Python | 3.8+ | Base programming language |
-| TensorFlow | 2.8.0 | Deep learning framework |
-| scikit-learn | 1.0.2 | Machine learning utilities |
-| pandas | 1.4.2 | Data processing and analysis |
-| numpy | 1.22.3 | Numerical computations |
-| matplotlib | 3.5.1 | Visualization (for reproducing charts) |
+# Required Libraries
 
-### Optional Dependencies
-| Library | Version | Purpose |
-|---------|---------|---------|
-| seaborn | 0.11.2 | Enhanced visualizations |
-| imbalanced-learn | 0.8.1 | Handling class imbalance (if needed) |
-| tqdm | 4.62.3 | Progress bars for long operations |
+## Core Dependencies
+| Library          | Version  |
+|------------------|----------|
+| numpy            | ≥1.20.0  |
+| pandas           | ≥1.3.0   |
+| scikit-learn     | ≥1.0.0   |
+| tensorflow       | ≥2.6.0   |
+| matplotlib       | ≥3.5.0   |
+| torch            | ≥1.10.0  |
+| esm              | ≥0.5.0   |
+| imbalanced-learn | ≥0.9.0   |
 
-### Installation
-1. **Base installation** (required):
+## Installation
