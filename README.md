@@ -1,4 +1,4 @@
-# iAMP-SeE: A High-Accuracy Antimicrobial Peptide Recognition Model Based on ESM2 Feature Extraction and SeE Attention Mechanism
+# iAMP-SeE: An Antimicrobial Peptide Recognition Model Based on ESM2 Feature Extraction and Hybrid Attention Mechanisms
 
 ## Dataset
 <img width="2000" height="1530" alt="Figure2" src="https://github.com/user-attachments/assets/96b3fda9-61fd-4d9e-a47b-11132eb3bacc" />
