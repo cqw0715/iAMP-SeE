@@ -21,56 +21,36 @@ import pickle
 from sklearn.neighbors import NearestNeighbors
 
 def get_sequence_features(sequences):
-    """Extract basic sequence features including amino acid composition, length, and dipeptide frequencies"""
+
     amino_acids = 'ACDEFGHIKLMNPQRSTVWY'
     
     features = []
     for seq in sequences:
-        # Calculate amino acid counts and composition
+        
         counts = {aa: seq.count(aa) for aa in amino_acids}
         total = max(1, len(seq))
         composition = [counts[aa]/total for aa in amino_acids]
         
-        # Normalized sequence length feature
-        length_feature = [len(seq)/1000]
         
-        # Calculate dipeptide frequencies
+        length_feature = [len(seq)/1000]
+          
         dipeptides = [seq[i:i+2] for i in range(len(seq)-1)]
         dipeptide_counts = {dp: dipeptides.count(dp) for dp in set(dipeptides)}
         total_dp = max(1, len(dipeptides))
         dipeptide_feature = [dipeptide_counts.get(dp, 0)/total_dp for dp in ['AA','AC','AD','AE','AG']]
         
-        # Combine all features
         combined = composition + length_feature + dipeptide_feature
         features.append(combined)
     
     return np.array(features)
 
 def robust_oversampling(sequences, labels):
-    """Perform oversampling with fallback strategies if primary methods fail"""
-    try:
-        # First try ADASYN oversampling
-        features = get_sequence_features(sequences)
-        ada = ADASYN(random_state=42, n_neighbors=min(5, len(sequences)-1))
-        features_resampled, labels_resampled = ada.fit_resample(features, labels)
-        
-        # Map resampled features back to original sequences
-        nbrs = NearestNeighbors(n_neighbors=1).fit(features)
-        _, indices = nbrs.kneighbors(features_resampled)
-        sequences_resampled = sequences[indices.flatten()]
-        
-        print("Successfully used ADASYN for oversampling")
-        return sequences_resampled, labels_resampled
-    except ValueError as e:
-        print(f"ADASYN failed: {str(e)}. Trying SMOTE...")
     
     try:
-        # Fallback to SMOTE if ADASYN fails
         features = get_sequence_features(sequences)
         smote = SMOTE(random_state=42, k_neighbors=min(5, len(sequences)-1))
         features_resampled, labels_resampled = smote.fit_resample(features, labels)
         
-        # Map resampled features back to original sequences
         nbrs = NearestNeighbors(n_neighbors=1).fit(features)
         _, indices = nbrs.kneighbors(features_resampled)
         sequences_resampled = sequences[indices.flatten()]
@@ -80,7 +60,6 @@ def robust_oversampling(sequences, labels):
     except ValueError as e:
         print(f"SMOTE failed: {str(e)}. Using RandomOverSampler as final fallback...")
     
-    # Final fallback to simple random oversampling
     ros = RandomOverSampler(random_state=42)
     seq_reshaped = np.array(sequences).reshape(-1, 1)
     seq_resampled, labels_resampled = ros.fit_resample(seq_reshaped, labels)
@@ -90,14 +69,12 @@ def robust_oversampling(sequences, labels):
     return sequences_resampled, labels_resampled
 
 def load_and_oversample_data(csv_path):
-    """Load data from CSV and perform oversampling to balance classes"""
     data = pd.read_csv(csv_path)
     print(f"Original class distribution:\n{data['label'].value_counts()}")
     
     sequences = data['sequence'].values
     labels = data['label'].values
     
-    # Apply robust oversampling
     sequences_resampled, labels_resampled = robust_oversampling(sequences, labels)
     
     print(f"\nClass distribution after oversampling:\n{pd.Series(labels_resampled).value_counts()}")
@@ -109,54 +86,71 @@ def load_esm_model():
     batch_converter = alphabet.get_batch_converter()
     return model.eval(), batch_converter
 
-# Load ESM model globally for feature extraction
 esm_model, esm_batch_converter = load_esm_model()
 
-def get_esm_features(sequences, cache_path='esm_features_2_1.0.pkl', batch_size=8):
-    """Extract ESM embeddings for sequences with caching"""
+def get_esm_features(sequences, cache_path='esm_features.pkl', batch_size=8):
+
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    print(f"Using device: {device}")
+    
     if os.path.exists(cache_path):
         print(f"Loading ESM features from cache file {cache_path}...")
         with open(cache_path, 'rb') as f:
             features = pickle.load(f)
+        print(f"Loaded {len(features)} features from cache.")
         return features
     
     print("Cache file not found, starting ESM feature extraction...")
+    print(f"Total sequences to process: {len(sequences)}")
     features = []
     
-    # Process sequences in batches
     for i in range(0, len(sequences), batch_size):
-        batch = sequences[i:i+batch_size]
+        batch_start = i
+        batch_end = min(i + batch_size, len(sequences))
+        batch = sequences[batch_start:batch_end]
         
-        # Convert batch to ESM format
-        batch_data = [(str(i), seq) for i, seq in enumerate(batch)]
+        print(f"\nProcessing batch {i//batch_size + 1}/{(len(sequences)-1)//batch_size + 1}")
+        print(f"Sequence indices: {batch_start}-{batch_end-1}")
+        
+        batch_data = [(str(idx), seq) for idx, seq in enumerate(batch)]
+        print("Converting sequences to ESM format...")
         batch_labels, batch_strs, batch_tokens = esm_batch_converter(batch_data)
+        print(f"Batch tokens shape: {batch_tokens.shape}")
         
-        # Extract embeddings
+        batch_tokens = batch_tokens.to(device)
+        esm_model.to(device)
+        
+        print("Extracting features with ESM model...")
         with torch.no_grad():
             results = esm_model(batch_tokens, repr_layers=[33], return_contacts=False)
             token_representations = results["representations"][33]
+            print(f"Token representations shape: {token_representations.shape}")
             
-            # Calculate mean pooling of embeddings
             seq_lengths = (batch_tokens != esm_model.alphabet.padding_idx).sum(1)
+            print(f"Sequence lengths: {seq_lengths}")
+            
             for seq_idx in range(token_representations.size(0)):
                 seq_len = seq_lengths[seq_idx]
                 seq_rep = token_representations[seq_idx, :seq_len]
-                features.append(seq_rep.mean(0).cpu().numpy())
+                mean_rep = seq_rep.mean(0).cpu().numpy()
+                features.append(mean_rep)
+                print(f"Sequence {batch_start + seq_idx}: Processed {seq_len} tokens -> Feature vector shape: {mean_rep.shape}")
         
-        # Clear memory if using GPU
-        torch.cuda.empty_cache() if torch.cuda.is_available() else None
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+            print("Cleared GPU memory")
     
     features = np.array(features)
+    print(f"\nFinal features array shape: {features.shape}")
     
-    # Cache the extracted features
+    print(f"Saving features to cache file {cache_path}...")
     with open(cache_path, 'wb') as f:
         pickle.dump(features, f)
-    print(f"ESM features saved to {cache_path}")
+    print(f"ESM features saved successfully to {cache_path}")
     
     return features
 
 class ProteinDataset(Dataset):
-    """PyTorch Dataset class for protein sequence features and labels"""
     def __init__(self, features, labels):
         self.features = features
         self.labels = labels
@@ -168,7 +162,6 @@ class ProteinDataset(Dataset):
         return torch.FloatTensor(self.features[idx]), torch.LongTensor([self.labels[idx]])
 
 class SEAttention(Layer):
-    """Squeeze-and-Excitation attention layer"""
     def __init__(self, channels, reduction=16):
         super(SEAttention, self).__init__()
         self.global_avg = GlobalAveragePooling1D()
@@ -184,7 +177,6 @@ class SEAttention(Layer):
         return inputs * se
 
 class ECAAttention(Layer):
-    """Efficient Channel Attention layer"""
     def __init__(self, kernel_size=3, **kwargs):
         super(ECAAttention, self).__init__(**kwargs)
         self.kernel_size = kernel_size
@@ -206,8 +198,6 @@ class ECAAttention(Layer):
         return inputs * y
 
 def build_double_attention_model(input_dim, num_classes=5):
-    """Build neural network model with both SE and ECA attention mechanisms"""
-    # Input layer for ESM features
     esm_input = Input(shape=(input_dim,))
     
     # Reshape for 1D operations
@@ -243,7 +233,6 @@ def build_double_attention_model(input_dim, num_classes=5):
     x = Dropout(0.5)(x)
     output = Dense(num_classes, activation='softmax')(x)
     
-    # Compile model
     model = Model(inputs=esm_input, outputs=output)
     model.compile(optimizer=Adam(learning_rate=1e-4),
                 loss='sparse_categorical_crossentropy',
@@ -251,7 +240,7 @@ def build_double_attention_model(input_dim, num_classes=5):
     return model
 
 def enhanced_cross_validation(features, labels, n_splits=10):
-    """Perform k-fold cross validation with comprehensive metrics tracking"""
+    
     kf = KFold(n_splits=n_splits, shuffle=True, random_state=42)
     results = []
     class_metrics = defaultdict(list)
@@ -278,12 +267,10 @@ def enhanced_cross_validation(features, labels, n_splits=10):
             verbose=1
         )
         
-        # Make predictions
         y_pred = model.predict(X_val)
         y_pred_class = np.argmax(y_pred, axis=1)
         y_score = y_pred
         
-        # Calculate metrics
         metrics = {
             'Fold': fold+1,
             'ACC': accuracy_score(y_val, y_pred_class),
@@ -307,7 +294,6 @@ def enhanced_cross_validation(features, labels, n_splits=10):
         }
         results.append(metrics)
         
-        # Calculate per-class metrics
         cm = confusion_matrix(y_val, y_pred_class)
         class_acc = cm.diagonal() / cm.sum(axis=1)
         
@@ -323,11 +309,9 @@ def enhanced_cross_validation(features, labels, n_splits=10):
             class_metrics[f'Class_{i}_ACC'].append(class_acc[i])
             class_metrics[f'Class_{i}_ROC_AUC'].append(class_roc_auc[i])
         
-        # Clean up memory
         del model
         tf.keras.backend.clear_session()
     
-    # Combine all results
     results_df = pd.DataFrame(results)
     for k, v in class_metrics.items():
         results_df[k] = v
@@ -336,7 +320,7 @@ def enhanced_cross_validation(features, labels, n_splits=10):
 
 if __name__ == "__main__":
     # Main execution block
-    sequences, labels = load_and_oversample_data("All_2_16200.csv")
+    sequences, labels = load_and_oversample_data("All_2_0.8_7442.csv")
     
     print("\nExtracting ESM features...")
     esm_features = get_esm_features(sequences)
