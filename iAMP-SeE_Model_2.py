@@ -320,7 +320,7 @@ def enhanced_cross_validation(features, labels, n_splits=10):
 
 if __name__ == "__main__":
     # Main execution block
-    sequences, labels = load_and_oversample_data("All_2_0.8_7442.csv")
+    sequences, labels = load_and_oversample_data("data2.csv")
     
     print("\nExtracting ESM features...")
     esm_features = get_esm_features(sequences)
@@ -367,3 +367,4 @@ if __name__ == "__main__":
         f.write(results_df.to_string())
     
     print("\nAll results have been saved to iAMP-SeE.csv and iAMP-SeE_results.txt")
+
