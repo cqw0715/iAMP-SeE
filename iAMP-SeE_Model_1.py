@@ -26,54 +26,72 @@ def load_data(csv_path):
 
 # ---------------------- 2. ESM Feature Extraction ----------------------
 def load_esm_model():
-    # Load ESM-2 model
     model, alphabet = esm.pretrained.esm2_t33_650M_UR50D()
     batch_converter = alphabet.get_batch_converter()
     return model.eval(), batch_converter
 
-# Global ESM model loading
 esm_model, esm_batch_converter = load_esm_model()
 
-def get_esm_features(sequences, cache_path='esm_features_1.pkl', batch_size=8):
+def get_esm_features(sequences, cache_path='esm_features.pkl', batch_size=8):
     """Extract features using ESM-2 model with caching support"""
-    # Check for cached features
+
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    print(f"Using device: {device}")
+    
     if os.path.exists(cache_path):
         print(f"Loading ESM features from cache file {cache_path}...")
         with open(cache_path, 'rb') as f:
             features = pickle.load(f)
+        print(f"Loaded {len(features)} features from cache.")
         return features
     
     print("Cache file not found, starting ESM feature extraction...")
+    print(f"Total sequences to process: {len(sequences)}")
     features = []
     
     for i in range(0, len(sequences), batch_size):
-        batch = sequences[i:i+batch_size]
+        batch_start = i
+        batch_end = min(i + batch_size, len(sequences))
+        batch = sequences[batch_start:batch_end]
         
-        # Prepare ESM input data
-        batch_data = [(str(i), seq) for i, seq in enumerate(batch)]
+        print(f"\nProcessing batch {i//batch_size + 1}/{(len(sequences)-1)//batch_size + 1}")
+        print(f"Sequence indices: {batch_start}-{batch_end-1}")
+        
+        batch_data = [(str(idx), seq) for idx, seq in enumerate(batch)]
+        print("Converting sequences to ESM format...")
         batch_labels, batch_strs, batch_tokens = esm_batch_converter(batch_data)
+        print(f"Batch tokens shape: {batch_tokens.shape}")
         
-        # Extract features
+        batch_tokens = batch_tokens.to(device)
+        esm_model.to(device)
+        
+        print("Extracting features with ESM model...")
         with torch.no_grad():
             results = esm_model(batch_tokens, repr_layers=[33], return_contacts=False)
             token_representations = results["representations"][33]
+            print(f"Token representations shape: {token_representations.shape}")
             
-            # Average pooling for each sequence (ignoring padding tokens)
             seq_lengths = (batch_tokens != esm_model.alphabet.padding_idx).sum(1)
+            print(f"Sequence lengths: {seq_lengths}")
+            
             for seq_idx in range(token_representations.size(0)):
                 seq_len = seq_lengths[seq_idx]
                 seq_rep = token_representations[seq_idx, :seq_len]
-                features.append(seq_rep.mean(0).cpu().numpy())
+                mean_rep = seq_rep.mean(0).cpu().numpy()
+                features.append(mean_rep)
+                print(f"Sequence {batch_start + seq_idx}: Processed {seq_len} tokens -> Feature vector shape: {mean_rep.shape}")
         
-        # Clear GPU memory
-        torch.cuda.empty_cache() if torch.cuda.is_available() else None
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+            print("Cleared GPU memory")
     
     features = np.array(features)
+    print(f"\nFinal features array shape: {features.shape}")
     
-    # Save features to cache file
+    print(f"Saving features to cache file {cache_path}...")
     with open(cache_path, 'wb') as f:
         pickle.dump(features, f)
-    print(f"ESM features saved to {cache_path}")
+    print(f"ESM features saved successfully to {cache_path}")
     
     return features
 
@@ -128,33 +146,26 @@ class ECAAttention(Layer):
 
 # ---------------------- 4. Model Architecture ----------------------
 def build_double_attention_model(input_dim):
-    # Single input stream (ESM features)
     esm_input = Input(shape=(input_dim,))
     
-    # Expand dimensions for convolution
     x = Reshape((1, input_dim))(esm_input)
     
-    # Convolutional blocks
     x = Conv1D(256, 5, padding='same', activation='swish')(x)
     x = BatchNormalization()(x)
     x = Conv1D(128, 3, padding='same', activation='swish')(x)
     x = BatchNormalization()(x)
     x = Dropout(0.5)(x)
     
-    # BiLSTM
     x = Bidirectional(LSTM(256, return_sequences=True))(x)
     x = Bidirectional(LSTM(128, return_sequences=True))(x)
     
-    # SeE attention mechanism
     x = SEAttention(channels=256)(x)  
     x = ECAAttention(kernel_size=3)(x) 
     
-    # Hybrid pooling
     avg_pool = GlobalAveragePooling1D()(x)
     max_pool = GlobalMaxPooling1D()(x)
     x = Concatenate()([avg_pool, max_pool])
     
-    # Classification head
     x = Dense(512, activation='swish', kernel_regularizer=regularizers.l2(1e-4))(x)
     x = Dropout(0.5)(x)
     x = Dense(256, activation='swish', kernel_regularizer=regularizers.l2(1e-4))(x)
@@ -177,24 +188,23 @@ def enhanced_cross_validation(features, labels, n_splits=10):
     results = []
     roc_data = []
     
+    os.makedirs('roc_data', exist_ok=True)
+    
     for fold, (train_idx, val_idx) in enumerate(kf.split(features)):
         print(f'\n--- Fold {fold+1} ---')
         X_train, X_val = features[train_idx], features[val_idx]
         y_train, y_val = labels[train_idx], labels[val_idx]
         
-        # Dynamic class weights
         class_weights = compute_class_weight('balanced', classes=np.unique(y_train), y=y_train)
         class_weights = {i:w for i,w in enumerate(class_weights)}
         
         model = build_double_attention_model(features.shape[1])
         
-        # Callback strategies
         callbacks = [
             EarlyStopping(monitor='val_loss', patience=20, restore_best_weights=True),
             ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=5)
         ]
         
-        # Training configuration
         history = model.fit(
             X_train, y_train,
             validation_data=(X_val, y_val),
@@ -205,11 +215,9 @@ def enhanced_cross_validation(features, labels, n_splits=10):
             verbose=1
         )
         
-        # Evaluation (using sklearn's roc_curve)
         y_pred = model.predict(X_val).flatten()
         y_pred_class = (y_pred > 0.5).astype(int)
         
-        # Calculate metrics
         metrics = {
             'Fold': fold+1,
             'Accuracy': accuracy_score(y_val, y_pred_class),
@@ -221,33 +229,91 @@ def enhanced_cross_validation(features, labels, n_splits=10):
         }
         results.append(metrics)
         
-        # ROC curve data
         fpr, tpr, _ = roc_curve(y_val, y_pred)
         roc_data.append((fpr, tpr, metrics['AUC']))
         
-        # Free memory
+        roc_df = pd.DataFrame({
+            'FPR': fpr,
+            'TPR': tpr
+        })
+        roc_df.to_csv(f'roc_data/fold_{fold+1}_roc_data.csv', index=False)
+        print(f"Saved ROC data for fold {fold+1} to roc_data/fold_{fold+1}_roc_data.csv")
+        
         del model
         tf.keras.backend.clear_session()
     
+    save_average_roc_data(roc_data)
+    
     return pd.DataFrame(results), roc_data
+
+def save_average_roc_data(roc_data):
+    max_length = max(len(fpr) for fpr, tpr, _ in roc_data)
+    
+    interp_fpr = np.linspace(0, 1, max_length)
+    interp_tprs = []
+    
+    for fpr, tpr, auc in roc_data:
+        interp_tpr = np.interp(interp_fpr, fpr, tpr)
+        interp_tpr[0] = 0.0
+        interp_tpr[-1] = 1.0
+        interp_tprs.append(interp_tpr)
+    
+    mean_tpr = np.mean(interp_tprs, axis=0)
+    std_tpr = np.std(interp_tprs, axis=0)
+    
+    avg_roc_df = pd.DataFrame({
+        'FPR': interp_fpr,
+        'Mean_TPR': mean_tpr,
+        'TPR_Std': std_tpr,
+        'TPR_Upper': np.minimum(mean_tpr + std_tpr, 1),
+        'TPR_Lower': np.maximum(mean_tpr - std_tpr, 0)
+    })
+    
+    avg_roc_df.to_csv('roc_data/average_roc_data.csv', index=False)
+    print("Saved average ROC data to roc_data/average_roc_data.csv")
+    
+    auc_values = [auc for _, _, auc in roc_data]
+    auc_df = pd.DataFrame({
+        'Fold': range(1, len(auc_values) + 1),
+        'AUC': auc_values
+    })
+    auc_df.to_csv('roc_data/auc_values.csv', index=False)
+    print("Saved AUC values to roc_data/auc_values.csv")
 
 # ---------------------- 6. Result Visualization ----------------------
 def plot_roc_curves(roc_data):
     plt.figure(figsize=(10, 8))
-    for fpr, tpr, auc in roc_data:
-        plt.plot(fpr, tpr, label=f'AUC = {auc:.3f}')
-    plt.plot([0, 1], [0, 1], 'k--')
+    
+    for i, (fpr, tpr, auc) in enumerate(roc_data):
+        plt.plot(fpr, tpr, alpha=0.3, lw=1, label=f'Fold {i+1} (AUC = {auc:.3f})')
+    
+    avg_roc_df = pd.read_csv('roc_data/average_roc_data.csv')
+    mean_auc = np.mean([auc for _, _, auc in roc_data])
+    std_auc = np.std([auc for _, _, auc in roc_data])
+    
+    plt.plot(avg_roc_df['FPR'], avg_roc_df['Mean_TPR'], color='b', 
+             label=f'Mean ROC (AUC = {mean_auc:.3f} ± {std_auc:.3f})', lw=2)
+    
+    plt.fill_between(avg_roc_df['FPR'], 
+                     avg_roc_df['TPR_Lower'], 
+                     avg_roc_df['TPR_Upper'], 
+                     color='grey', alpha=0.2)
+    
+    plt.plot([0, 1], [0, 1], 'k--', lw=2)
+    plt.xlim([0.0, 1.0])
+    plt.ylim([0.0, 1.05])
     plt.xlabel('False Positive Rate')
     plt.ylabel('True Positive Rate')
-    plt.title('ROC Curves')
+    plt.title('ROC Curves with Mean and Standard Deviation')
     plt.legend(loc='lower right')
-    plt.savefig('iAMP-SeE.png')
+    plt.grid(True)
+    plt.savefig('iAMP-SeE.png', dpi=300, bbox_inches='tight')
     plt.show()
 
 # ---------------------- Main Pipeline ----------------------
 if __name__ == "__main__":
     # Load data
-    sequences, labels = load_data("All_32400.csv")
+    sequences, labels = load_data("data1.csv")
     
     # Extract features using ESM
     print("\nExtracting ESM features...")
