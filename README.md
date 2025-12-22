@@ -39,4 +39,6 @@ If GPU memory is insufficient, the following two approaches can be applied:<br>
 <br>
 The initially extracted ESM-2 features are named "esm_features.pkl". The naming can be adjusted according to your requirements, provided that the local pkl file and the filename input to the model remain consistent. The corresponding locations for modification are: line 25 in 'iAMP-SeE_Model_1.py' and line 91 in 'iAMP-SeE_Model_2.py'.
 ### 3. Model Training
-The model can now proceed to run normally. Please wait patiently until the execution is complete.
+The model can now proceed to run normally. Please wait patiently until the execution is complete.<br>
+A practical suggestion is provided: if the normal operation of the model cannot be confirmed, modify 'n_splits=10' to 'n_splits=2' and 'epochs=30/120' to 'epochs=1' to conduct a preliminary test run. Once the model executes successfully, the parameters can be restored to their original values. This approach significantly reduces the time cost of trial and error. <br>
+The corresponding modification locations are as follows: in 'iAMP-SeE_Model_1.py', modify 'n_splits=10' at line 186 and 'epochs=30' at line 211; in 'iAMP-SeE_Model_2.py', modify 'n_splits=10' at line 242 and 'epochs=120' at line 264.
