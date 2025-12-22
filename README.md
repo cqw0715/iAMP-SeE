@@ -1,7 +1,7 @@
 # iAMP-SeE: An Antimicrobial Peptide Recognition Model Based on ESM2 Feature Extraction and Hybrid Attention Mechanisms
 
 ## Dataset
-<img width="2000" height="1530" alt="Figure2" src="https://github.com/user-attachments/assets/96b3fda9-61fd-4d9e-a47b-11132eb3bacc" />
+<img width="1000" height="800" alt="Figure2" src="https://github.com/user-attachments/assets/1ca00947-b244-4952-b5d2-b73b79f04b67" />
 In dataset 1, the positive samples were collected from five public antimicrobial peptide databases: RAMP, dbAMP, CAMPr-4, AMPfun, and ADAPBLE. The negative samples were sourced from the UniProt database.
 Dataset 2 is sourced from the literature referenced below：
 [1]Jun Zhao,Hangcheng Liu,Leyao Kang,Wanling Gao,Quan Lu,Yuan Rao & Zhenyu Yue.(2025).deep-AMPpred: A Deep Learning Method for Identifying Antimicrobial Peptides and Their Functional Activities..Journal of chemical information and modeling, 
