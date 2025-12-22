@@ -34,6 +34,6 @@ In the feature extraction method, we primarily employ the ESM-2 approach, specif
 If your GPU has sufficient memory, the sequence features in the dataset can be extracted quickly. <br>
 If GPU memory is insufficient, the following two approaches can be applied:<br>
 1) Use the CPU for feature extraction: when GPU memory is limited, the model will automatically switch to the CPU to extract sequence features, though this will require more time;<br>
-2) 2) Perform feature extraction on another device, ensuring that the numpy versions on both devices are consistent; otherwise, the extracted features will be unusable.
+2) Perform feature extraction on another device, ensuring that the numpy versions on both devices are consistent; otherwise, the extracted features will be unusable.
 
 ### 3. Model Training
