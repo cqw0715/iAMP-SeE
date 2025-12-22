@@ -20,7 +20,12 @@ The main environment for the model operation is as follows：<br>
 I have uploaded the complete environment for running the model locally to the requirements.txt file. You can refer to this file for installation.
 
 ```bash
-
+pip install tensorflow==2.13.0
+pip install torch==2.9.1
+pip install fair-esm==2.0.0
+pip install numpy==1.23.5
+pip install imblearn
+...
 ```
 
 ## Model execution
