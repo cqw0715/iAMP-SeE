@@ -35,6 +35,7 @@ Please use a single CSV file to store the dataset for model execution. The file 
 2. 'label': for recording the class label of the protein sequence. Labels should start from 0.<br>
 <br>
 For binary classification of AMPs, the labels should be limited to 0 or 1. Please download the model code: iAMP-SeE_Model_1.py, and replace "data1.csv" on line 316 with the name of your dataset.
+
 ```bash
 sequences, labels = load_data("data1.csv")  ##316
 ```
