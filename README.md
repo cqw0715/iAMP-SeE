@@ -31,6 +31,9 @@ For multiclass classification of AMPs, labels should be 0-n. Please download the
 
 ### 2. Feature Extraction with ESM-2
 In the feature extraction method, we primarily employ the ESM-2 approach, specifically using the version: esm2_t33_650M_UR50D. The corresponding version can be downloaded via the following link: https://zenodo.org/records/7566741.<br>
-
+If your GPU has sufficient memory, the sequence features in the dataset can be extracted quickly. <br>
+If GPU memory is insufficient, the following two approaches can be applied:<br>
+1) Use the CPU for feature extraction: when GPU memory is limited, the model will automatically switch to the CPU to extract sequence features, though this will require more time;<br>
+2) 2) Perform feature extraction on another device, ensuring that the numpy versions on both devices are consistent; otherwise, the extracted features will be unusable.
 
 ### 3. Model Training
