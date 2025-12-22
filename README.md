@@ -21,5 +21,8 @@ I have uploaded the complete environment for running the model locally to the re
 
 ## Model execution
 ### 1. Dataset Preparation
-<br>
+Please use a single CSV file to store the dataset for model execution. The file must include the following two columns:<br>
+1. 'sequence': for storing protein sequences.<br>
+2. 'label': for recording the class label of the protein sequence. Labels should start from 0.<br>
+
 iAMP-SeEModel1.py is used for the binary classification task of AMPs, while iAMP-SeEModel2.py is utilized for the multi-class classification task of AMPs. The corresponding datasets are All32400.csv and All2_16200.csv, respectively.
