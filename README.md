@@ -19,6 +19,9 @@ The main environment for the model operation is as follows：<br>
 
 I have uploaded the complete environment for running the model locally to the requirements.txt file. You can refer to this file for installation.
 
+```bash
+
+
 ## Model execution
 ### 1. Dataset Preparation
 Please use a single CSV file to store the dataset for model execution. The file must include the following two columns:<br>
