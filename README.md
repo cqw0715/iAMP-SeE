@@ -35,8 +35,19 @@ Please use a single CSV file to store the dataset for model execution. The file 
 2. 'label': for recording the class label of the protein sequence. Labels should start from 0.<br>
 <br>
 For binary classification of AMPs, the labels should be limited to 0 or 1. Please download the model code: iAMP-SeE_Model_1.py, and replace "data1.csv" on line 316 with the name of your dataset.
+```bash
+sequences, labels = load_data("data1.csv")  ##316
+```
 <br>
 For multiclass classification of AMPs, labels should be 0-(n-1) (n denotes the number of AMP categories.),. Please download the model code: iAMP-SeE_Model_2.py, replace "data2.csv" on line 323 with the name of your dataset, and update the parameters accordingly: change 'num_classes=5' to 'num_classes=n' on lines 200 and 254, and replace 'depth=5' with 'depth=n' on lines 281, 285, 290, and 300.
+
+```bash
+sequences, labels = load_and_oversample_data("data2.csv")    ##323
+def build_double_attention_model(input_dim, num_classes=5):  ##200
+model = build_double_attention_model(features.shape[1], num_classes=5)   ##254
+tf.one_hot(y_val, depth=5).numpy(),   ##281, 285, 290
+y_val_onehot = tf.one_hot(y_val, depth=5).numpy()   ##300
+```
 
 ### 2. Feature Extraction with ESM-2
 In the feature extraction method, we primarily employ the ESM-2 approach, specifically using the version: esm2_t33_650M_UR50D. The corresponding version can be downloaded via the following link: https://zenodo.org/records/7566741. The corresponding version of ESM-2 will also be automatically downloaded when the model is executed.<br>
