@@ -5,19 +5,15 @@
 <br>
 In dataset 1, the positive samples were collected from five public antimicrobial peptide databases: RAMP, dbAMP, CAMPr-4, AMPfun, and ADAPBLE. The negative samples were sourced from the UniProt database.
 <br>
-Dataset 2 is sourced from the literature referenced below：
+Dataset 2 is sourced from the literature referenced below：<br>
 [1]Jun Zhao,Hangcheng Liu,Leyao Kang,Wanling Gao,Quan Lu,Yuan Rao & Zhenyu Yue.(2025).deep-AMPpred: A Deep Learning Method for Identifying Antimicrobial Peptides and Their Functional Activities..Journal of chemical information and modeling, 
 
 ## Core Dependencies
 | Library          | Version  |
 |------------------|----------|
-| numpy            | ≥1.20.0  |
-| pandas           | ≥1.3.0   |
-| scikit-learn     | ≥1.0.0   |
-| tensorflow       | ≥2.6.0   |
-| matplotlib       | ≥3.5.0   |
-| torch            | ≥1.10.0  |
-| esm              | ≥0.5.0   |
-| imbalanced-learn | ≥0.9.0   |
+| tensorflow       | 2.13.0   |
+| torch            | 2.9.1    |
+| fair-esm         | 2.0.0    |
+| numpy            | 1.23.5   |
 
 iAMP-SeEModel1.py is used for the binary classification task of AMPs, while iAMP-SeEModel2.py is utilized for the multi-class classification task of AMPs. The corresponding datasets are All32400.csv and All2_16200.csv, respectively.
