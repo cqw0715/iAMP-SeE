@@ -55,7 +55,7 @@ y_val_onehot = tf.one_hot(y_val, depth=5).numpy()   ##300
 In the feature extraction method, we primarily employ the ESM-2 approach, specifically using the version: esm2_t33_650M_UR50D. The corresponding version can be downloaded via the following link: https://zenodo.org/records/7566741. The corresponding version of ESM-2 will also be automatically downloaded when the model is executed.<br>
 If your GPU has sufficient memory, the sequence features in the dataset can be extracted quickly. <br>
 If GPU memory is insufficient, the following two approaches can be applied:<br>
-1)To reduce the batch size for feature extraction, the minimum value can be set to 'batch_size=1'. The corresponding modifications should be made at: line 25 in 'iAMP-SeE_Model_1.py' and line 91 in 'iAMP-SeE_Model_2.py'.<br>
+1) To reduce the batch size for feature extraction, the minimum value can be set to 'batch_size=1'. The corresponding modifications should be made at: line 25 in 'iAMP-SeE_Model_1.py' and line 91 in 'iAMP-SeE_Model_2.py'.<br>
 
 ```bash
 def get_esm_features(sequences, cache_path='esm_features.pkl', batch_size=8):  ##iAMP-SeE_Model_1.py: 25
