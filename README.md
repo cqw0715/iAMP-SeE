@@ -71,3 +71,12 @@ The initially extracted ESM-2 features are named "esm_features.pkl". The naming 
 The model can now proceed to run normally. Please wait patiently until the execution is complete.<br>
 A practical suggestion is provided: if the normal operation of the model cannot be confirmed, modify 'n_splits=10' to 'n_splits=2' and 'epochs=30/120' to 'epochs=1' to conduct a preliminary test run. Once the model executes successfully, the parameters can be restored to their original values. This approach significantly reduces the time cost of trial and error. <br>
 The corresponding modification locations are as follows: in 'iAMP-SeE_Model_1.py', modify 'n_splits=10' at line 186 and 'epochs=30' at line 211; in 'iAMP-SeE_Model_2.py', modify 'n_splits=10' at line 242 and 'epochs=120' at line 264.
+
+```bash
+def enhanced_cross_validation(features, labels, n_splits=10):  ##iAMP-SeE_Model_1.py: 186
+epochs=30,    ##iAMP-SeE_Model_1.py: 211
+```
+```bash
+def enhanced_cross_validation(features, labels, n_splits=10):  ##iAMP-SeE_Model_2.py: 242
+epochs=120,   ##iAMP-SeE_Model_2.py: 264
+```
