@@ -15,7 +15,8 @@ The main environment for the model operation is as follows：<br>
 | tensorflow       | 2.13.0   |
 | torch            | 2.9.1    |
 | fair-esm         | 2.0.0    |
-| numpy            | 1.23.5   |
+| numpy            | 1.23.5   |<br>
+
 I have uploaded the complete environment for running the model locally to the requirements.txt file. You can refer to this file for installation.
 
 ## Model execution
