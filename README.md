@@ -20,5 +20,6 @@ The main environment for the model operation is as follows：<br>
 I have uploaded the complete environment for running the model locally to the requirements.txt file. You can refer to this file for installation.
 
 ## Model execution
+### 1. Dataset Preparation
 <br>
 iAMP-SeEModel1.py is used for the binary classification task of AMPs, while iAMP-SeEModel2.py is utilized for the multi-class classification task of AMPs. The corresponding datasets are All32400.csv and All2_16200.csv, respectively.
