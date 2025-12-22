@@ -46,7 +46,8 @@ For multiclass classification of AMPs, labels should be 0-(n-1) (n denotes the n
 sequences, labels = load_and_oversample_data("data2.csv")    ##323
 def build_double_attention_model(input_dim, num_classes=5):  ##200
 model = build_double_attention_model(features.shape[1], num_classes=5)   ##254
-tf.one_hot(y_val, depth=5).numpy(),   ##281, 285, 290
+model = build_double_attention_model(features.shape[1], num_classes=5)   ##254
+tf.one_hot(y_val, depth=5).numpy(),   ##281、285、290
 y_val_onehot = tf.one_hot(y_val, depth=5).numpy()   ##300
 ```
 
@@ -55,6 +56,12 @@ In the feature extraction method, we primarily employ the ESM-2 approach, specif
 If your GPU has sufficient memory, the sequence features in the dataset can be extracted quickly. <br>
 If GPU memory is insufficient, the following two approaches can be applied:<br>
 1)To reduce the batch size for feature extraction, the minimum value can be set to 'batch_size=1'. The corresponding modifications should be made at: line 25 in 'iAMP-SeE_Model_1.py' and line 91 in 'iAMP-SeE_Model_2.py'.<br>
+
+```bash
+def get_esm_features(sequences, cache_path='esm_features.pkl', batch_size=8):  ##iAMP-SeE_Model_1.py: 25
+def get_esm_features(sequences, cache_path='esm_features.pkl', batch_size=8):  ##iAMP-SeE_Model_2.py: 91
+```
+
 2) Use the CPU for feature extraction: when GPU memory is limited, the model will automatically switch to the CPU to extract sequence features, though this will require more time;<br>
 3) Perform feature extraction on another device, ensuring that the numpy versions on both devices are consistent; otherwise, the extracted features will be unusable.
 <br>
