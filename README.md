@@ -27,6 +27,6 @@ Please use a single CSV file to store the dataset for model execution. The file 
 <br>
 For binary classification of AMPs, the labels should be limited to 0 or 1. Please download the model code: iAMP-SeE_Model_1.py, and replace "data1.csv" on line 316 with the name of your dataset.
 <br>
-For multiclass classification of AMPs, labels should be 0-n. Please download the model code: iAMP-SeE_Model_2.py, replace "data2.csv" on line 323 with the name of your dataset, and update the parameters accordingly: change 'num_classes=5' to 'num_classes=n' on lines 200 and 254, and replace 'depth=5' with 'depth=n' on lines 281, 285, 290, and 300.
+For multiclass classification of AMPs, labels should be 0-n. Please download the model code: iAMP-SeE_Model_2.py, replace "data2.csv" on line 323 with the name of your dataset, and update the parameters accordingly: change 'num_classes=5' to 'num_classes=n+1' on lines 200 and 254, and replace 'depth=5' with 'depth=n+1' on lines 281, 285, 290, and 300.
 
 iAMP-SeEModel1.py is used for the binary classification task of AMPs, while iAMP-SeEModel2.py is utilized for the multi-class classification task of AMPs. The corresponding datasets are All32400.csv and All2_16200.csv, respectively.
