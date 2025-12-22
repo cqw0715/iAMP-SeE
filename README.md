@@ -37,3 +37,4 @@ If GPU memory is insufficient, the following two approaches can be applied:<br>
 2) Perform feature extraction on another device, ensuring that the numpy versions on both devices are consistent; otherwise, the extracted features will be unusable.
 
 ### 3. Model Training
+The model can now proceed to run normally. Please wait patiently until the execution is complete.
