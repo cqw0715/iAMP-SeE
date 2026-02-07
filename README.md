@@ -34,13 +34,13 @@ Please use a single CSV file to store the dataset for model execution. The file 
 1. 'sequence': for storing protein sequences.<br>
 2. 'label': for recording the class label of the protein sequence. Labels should start from 0.<br>
 <br>
-For binary classification of AMPs, the labels should be limited to 0 or 1. Please download the model code: iAMP-SeE_Model_1.py, and replace "data1.csv" on line 316 with the name of your dataset.
+For binary classification of AMPs, the labels should be limited to 0 or 1. Please download the model code: Binary classification.py, and replace "data1.csv" on line 316 with the name of your dataset.
 
 ```bash
 sequences, labels = load_data("data1.csv")  ##316
 ```
 <br>
-For multiclass classification of AMPs, labels should be 0-(n-1) (n denotes the number of AMP categories.),. Please download the model code: iAMP-SeE_Model_2.py, replace "data2.csv" on line 323 with the name of your dataset, and update the parameters accordingly: change 'num_classes=5' to 'num_classes=n' on lines 200 and 254, and replace 'depth=5' with 'depth=n' on lines 281, 285, 290, and 300.
+For multiclass classification of AMPs, labels should be 0-(n-1) (n denotes the number of AMP categories.),. Please download the model code: Multi-label classification.py, replace "data2.csv" on line 323 with the name of your dataset, and update the parameters accordingly: change 'num_classes=5' to 'num_classes=n' on lines 200 and 254, and replace 'depth=5' with 'depth=n' on lines 281, 285, 290, and 300.
 
 ```bash
 sequences, labels = load_and_oversample_data("data2.csv")    ##323
@@ -55,28 +55,28 @@ y_val_onehot = tf.one_hot(y_val, depth=5).numpy()   ##300
 In the feature extraction method, we primarily employ the ESM-2 approach, specifically using the version: esm2_t33_650M_UR50D. The corresponding version can be downloaded via the following link: https://zenodo.org/records/7566741. The corresponding version of ESM-2 will also be automatically downloaded when the model is executed.<br>
 If your GPU has sufficient memory, the sequence features in the dataset can be extracted quickly. <br>
 If GPU memory is insufficient, the following two approaches can be applied:<br>
-1) To reduce the batch size for feature extraction, the minimum value can be set to 'batch_size=1'. The corresponding modifications should be made at: line 25 in 'iAMP-SeE_Model_1.py' and line 91 in 'iAMP-SeE_Model_2.py'.<br>
+1) To reduce the batch size for feature extraction, the minimum value can be set to 'batch_size=1'. The corresponding modifications should be made at: line 25 in 'Binary classification.py' and line 91 in 'Multi-label classification.py'.<br>
 
 ```bash
-def get_esm_features(sequences, cache_path='esm_features.pkl', batch_size=8):  ##iAMP-SeE_Model_1.py: 25
-def get_esm_features(sequences, cache_path='esm_features.pkl', batch_size=8):  ##iAMP-SeE_Model_2.py: 91
+def get_esm_features(sequences, cache_path='esm_features.pkl', batch_size=8):  ##Binary classification.py: 25
+def get_esm_features(sequences, cache_path='esm_features.pkl', batch_size=8):  ##Multi-label classification.py: 91
 ```
 
 2) Use the CPU for feature extraction: when GPU memory is limited, the model will automatically switch to the CPU to extract sequence features, though this will require more time;<br>
 3) Perform feature extraction on another device, ensuring that the numpy versions on both devices are consistent; otherwise, the extracted features will be unusable.
 <br>
-The initially extracted ESM-2 features are named "esm_features.pkl". The naming can be adjusted according to your requirements, provided that the local pkl file and the filename input to the model remain consistent. The corresponding locations for modification are: line 25 in 'iAMP-SeE_Model_1.py' and line 91 in 'iAMP-SeE_Model_2.py'.
+The initially extracted ESM-2 features are named "esm_features.pkl". The naming can be adjusted according to your requirements, provided that the local pkl file and the filename input to the model remain consistent. The corresponding locations for modification are: line 25 in 'Binary classification.py' and line 91 in 'Multi-label classification.py'.
 
 ### 3. Model Training
 The model can now proceed to run normally. Please wait patiently until the execution is complete.<br>
 A practical suggestion is provided: if the normal operation of the model cannot be confirmed, modify 'n_splits=10' to 'n_splits=2' and 'epochs=30/120' to 'epochs=1' to conduct a preliminary test run. Once the model executes successfully, the parameters can be restored to their original values. This approach significantly reduces the time cost of trial and error. <br>
-The corresponding modification locations are as follows: in 'iAMP-SeE_Model_1.py', modify 'n_splits=10' at line 186 and 'epochs=30' at line 211; in 'iAMP-SeE_Model_2.py', modify 'n_splits=10' at line 242 and 'epochs=120' at line 264.
+The corresponding modification locations are as follows: in 'Binary classification.py', modify 'n_splits=10' at line 186 and 'epochs=30' at line 211; in 'Multi-label classification.py', modify 'n_splits=10' at line 242 and 'epochs=120' at line 264.
 
 ```bash
-def enhanced_cross_validation(features, labels, n_splits=10):  ##iAMP-SeE_Model_1.py: 186
-epochs=30,    ##iAMP-SeE_Model_1.py: 211
+def enhanced_cross_validation(features, labels, n_splits=10):  ##Binary classification.py: 186
+epochs=30,    ##Binary classification.py: 211
 ```
 ```bash
-def enhanced_cross_validation(features, labels, n_splits=10):  ##iAMP-SeE_Model_2.py: 242
-epochs=120,   ##iAMP-SeE_Model_2.py: 264
+def enhanced_cross_validation(features, labels, n_splits=10):  ##Multi-label classification.py: 242
+epochs=120,   ##Multi-label classification.py: 264
 ```
